@@ -19,7 +19,7 @@ Implemented features:
 ### Endpoints
 #### User registration: ```POST '/api/v0/users/new' ``` <br>
  Request body example: <br>
-```
+```json
 {
     "username": "admin",
     "password": "123456",
@@ -27,7 +27,7 @@ Implemented features:
 }
 ```
 JSON response example:
-```
+```json
 {
     "status": "Successful",
     "message": "User registered successfully",
@@ -50,14 +50,14 @@ JSON response example:
 ---
 #### User logging in: ```POST '/api/v0/auth/login' ``` <br>
 Request body example: <br>
-```
+```json
 {
     "username": "admin",
     "password": "123456"
 }
 ```
 JSON response example:
-```
+```json
 {
     "accessToken": "__access__token__"
 }
@@ -67,7 +67,7 @@ The refresh token will be sent to the client as an HTTP-only cookie
 ---
 #### Refresh token endpoint: ```POST '/api/v0/auth/refresh' ``` <br>
 JSON response example:
-```
+```json
 {
     "accessToken": "__access__token__"
 }
