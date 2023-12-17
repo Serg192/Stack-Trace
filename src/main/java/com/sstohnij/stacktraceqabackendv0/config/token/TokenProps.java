@@ -16,4 +16,7 @@ public class TokenProps {
 
     @Value("${stack-trace.refresh-token-expiration}")
     private Long refreshTokenExpirationInMin;
+
+    @Value("${stack-trace.confirmation-token-expiration}")
+    private Long confirmationTokenExpiration;
 }

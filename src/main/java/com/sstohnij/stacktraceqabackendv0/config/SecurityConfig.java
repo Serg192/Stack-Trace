@@ -18,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -37,7 +38,16 @@ public class SecurityConfig {
                 .addFilterBefore(exceptionHandlerFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtTokenVerificationFilter, ExceptionHandlerFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/v0/users/**", "/api/v0/auth/login", "/api/v0/auth/refresh").permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v0/users/**",
+                                "/api/v0/auth/login",
+                                "/api/v0/auth/refresh"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v0/auth/email-confirmation",
+                                "/api/v0/users/**"
+                        ).permitAll()
                         .anyRequest()
                         .authenticated()
                 )

@@ -4,7 +4,6 @@ import com.sstohnij.stacktraceqabackendv0.entity.AppUser;
 import com.sstohnij.stacktraceqabackendv0.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,12 +22,7 @@ public class CustomUserDetailService implements UserDetailsService {
                 .findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(String.format("User with username: '%s' not found", username)));
 
-        try {
-            new AccountStatusUserDetailsChecker().check(appUser);
-        } catch(AccountStatusException e){
-            log.error("Could not authenticate user", e);
-            throw new RuntimeException(e.getMessage());
-        }
+        new AccountStatusUserDetailsChecker().check(appUser);
         return appUser;
     }
 }

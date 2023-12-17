@@ -1,13 +1,13 @@
 package com.sstohnij.stacktraceqabackendv0.auth;
 
-import com.sstohnij.stacktraceqabackendv0.service.JwtService;
+import com.sstohnij.stacktraceqabackendv0.service.JwtTokenService;
 import io.jsonwebtoken.*;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,11 +24,16 @@ import java.util.stream.Collectors;
 
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class JwtTokenVerificationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    @Lazy
+    private final JwtTokenService jwtService;
+
+    public JwtTokenVerificationFilter(@Lazy JwtTokenService jwtService) {
+        this.jwtService = jwtService;
+    }
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,

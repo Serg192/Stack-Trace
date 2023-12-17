@@ -24,7 +24,4 @@ public class Role {
     private String roleName;
 
     private String roleDescription;
-
-    @ManyToMany(mappedBy = "roles")
-    private Set<AppUser> users;
 }

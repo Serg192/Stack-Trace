@@ -42,11 +42,6 @@ public class AppUser implements UserDetails {
     private boolean accountBanned;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "app_users_roles", joinColumns = {
-            @JoinColumn(name = "app_user_id", referencedColumnName = "id")
-    }, inverseJoinColumns = {
-            @JoinColumn(name = "role_id", referencedColumnName = "id")
-    })
     private Set<Role> roles;
 
     @Override
@@ -84,6 +79,6 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return emailVerified && !accountDeleted && !accountBanned;
+        return emailVerified; //&& !accountDeleted && !accountBanned;
     }
 }
