@@ -15,6 +15,7 @@ Implemented features:
 3. JWT based authentication and authorization with access & refresh tokens
 4. API method security with user roles
 5. User logout
+6. Creating posts (for authenticated users) and get specific post(all users)
 ---
 ### Endpoints
 #### User registration: ```POST '/api/v0/users/new' ``` <br>
@@ -83,3 +84,60 @@ This request cleans up the refresh token cookie and removes the refresh token fr
 
 ---
 #### Get all users (paginated response): ```GET '/api/v0/users?page=[PAGE]&size=[SIZE]'```
+
+---
+## Posts
+Get post by id: ```GET '/api/v0/posts/{post_id}'```
+
+JSON response example:
+```json
+{
+    "status": "Successful",
+    "message": null,
+    "data": {
+        "id": 1,
+        "user": {
+            "id": 1,
+            "username": "user",
+            "email": "test@gmail.com",
+            "rating": 0,
+            "emailVerified": true,
+            "accountDeleted": false,
+            "accountBanned": false,
+            "roles": [
+                {
+                    "roleName": "type_user"
+                }
+            ]
+        },
+        "title": "Test post num 1",
+        "postContent": "This is my first post",
+        "publishDate": "2023-12-19",
+        "categories": [
+            {
+                "id": 1,
+                "title": "General",
+                "description": "General discussions and questions"
+            },
+            {
+                "id": 2,
+                "title": "Java",
+                "description": "Java programming language"
+            }
+        ],
+        "problemSolved": false,
+        "postBanned": false
+    }
+}
+```
+---
+Create post: ```POST '/api/v0/posts'```
+
+Request body example:
+```json
+{
+  "title": "Test post num 1",
+  "postContent": "This is my first post",
+  "categories": [1, 2, 2]
+}
+```

@@ -2,6 +2,7 @@ package com.sstohnij.stacktraceqabackendv0.exception;
 
 import com.sstohnij.stacktraceqabackendv0.common.ResponseObject;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidConformationTokenException;
+import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -154,6 +155,18 @@ public class CustomExceptionHandler {
         ResponseObject<?> response = ResponseObject.builder()
                 .status(ResponseObject.ResponseStatus.FAILED)
                 .message(e.getBindingResult().getAllErrors().get(0).getDefaultMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(value = NotValidRequestParameter.class)
+    public ResponseEntity<ResponseObject<?>> handleNotValidRequestParameterException(NotValidRequestParameter e) {
+        log.error(e.getMessage(), e);
+
+        ResponseObject<?> response = ResponseObject.builder()
+                .status(ResponseObject.ResponseStatus.FAILED)
+                .message(e.getMessage())
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);

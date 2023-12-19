@@ -2,7 +2,6 @@ package com.sstohnij.stacktraceqabackendv0.enums;
 
 public enum RoleName {
     ROLE_USER("type_user"),
-    ROLE_MODERATOR("type_moderator"),
     ROLE_ADMIN("type_admin");
 
     private final String str;
