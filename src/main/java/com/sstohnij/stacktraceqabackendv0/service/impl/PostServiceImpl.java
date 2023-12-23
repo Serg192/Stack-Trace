@@ -46,7 +46,23 @@ public class PostServiceImpl implements PostService {
                 String.format("Post with id='%s' not found", id)
         ));
 
-        return PostMapper.toPostResponse(post);
+        final long likes = likeRepository.countByPostIdAndIsDislikeIsFalse(id);
+        final long dislikes = likeRepository.countByPostIdAndIsDislikeIsTrue(id);
+        final long comments = commentRepository.countByPostId(id);
+
+        PostResponse response = PostMapper.toPostResponse(post);
+        response.setLikes(likes);
+        response.setDislikes(dislikes);
+        response.setComments(comments);
+        // If user is authenticated we add additional info about user reaction
+        // to post
+        try {
+            AppUser user = getAuthenticatedUser();
+            Optional<Like> userPostLike = likeRepository.findByUserAndPost(user, post);
+            userPostLike.ifPresent(like -> response.setUserReaction(like.isDislike() ? LikeOpResult.DISLIKED : LikeOpResult.LIKED));
+        } catch (Exception ignored) {}
+
+        return response;
     }
 
     @Override

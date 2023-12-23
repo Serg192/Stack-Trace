@@ -1,9 +1,11 @@
 package com.sstohnij.stacktraceqabackendv0.mapper;
 
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.UserResponse;
 import com.sstohnij.stacktraceqabackendv0.entity.Post;
+import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
 
 public class PostMapper {
 
@@ -26,6 +28,7 @@ public class PostMapper {
                .categories(post.getCategories())
                .postBanned(post.isPostBanned())
                .problemSolved(post.isProblemSolved())
+               .userReaction(LikeOpResult.NONE)
                .build();
     }
 }

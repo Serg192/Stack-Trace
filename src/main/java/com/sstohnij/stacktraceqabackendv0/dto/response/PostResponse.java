@@ -2,6 +2,7 @@ package com.sstohnij.stacktraceqabackendv0.dto.response;
 
 import com.sstohnij.stacktraceqabackendv0.entity.AppUser;
 import com.sstohnij.stacktraceqabackendv0.entity.Category;
+import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,14 @@ public class PostResponse {
         private String postContent;
 
         private Date publishDate;
+
+        private Long likes;
+
+        private Long dislikes;
+
+        private Long comments;
+
+        private LikeOpResult userReaction;
 
         private Set<Category> categories;
 
