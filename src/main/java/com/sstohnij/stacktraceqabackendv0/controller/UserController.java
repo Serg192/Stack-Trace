@@ -7,6 +7,9 @@ import com.sstohnij.stacktraceqabackendv0.dto.response.UsersPageResponse;
 import com.sstohnij.stacktraceqabackendv0.entity.AppUser;
 import com.sstohnij.stacktraceqabackendv0.mapper.UserMapper;
 import com.sstohnij.stacktraceqabackendv0.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +24,14 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v0/users")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Users")
 public class UserController {
 
     private final UserService userService;
 
+    @Operation(
+            description = "User registration endpoint"
+    )
     @PostMapping("/new")
     public ResponseObject<UserResponse> registerUser(@RequestBody @Valid UserRegistrationRequest userRegistrationRequest) {
       log.info("Received user registration request: {}", userRegistrationRequest);

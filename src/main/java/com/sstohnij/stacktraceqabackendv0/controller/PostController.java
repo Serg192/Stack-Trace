@@ -4,6 +4,8 @@ import com.sstohnij.stacktraceqabackendv0.common.ResponseObject;
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
 import com.sstohnij.stacktraceqabackendv0.service.PostService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v0/posts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Posts")
 public class PostController {
 
     private final PostService postService;
@@ -30,6 +33,7 @@ public class PostController {
 
     @PostMapping("/")
     @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Token")
     public ResponseObject<PostResponse> createNewPost(@Valid @RequestBody CreatePostRequest createPostRequest){
         log.info("Received create post request with post data -> title: '{}', content: '{}', categories: {}",
                 createPostRequest.getTitle(),

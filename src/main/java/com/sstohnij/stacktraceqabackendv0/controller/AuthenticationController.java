@@ -5,6 +5,9 @@ import com.sstohnij.stacktraceqabackendv0.dto.request.AuthenticationRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.RefreshTokenRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.response.AuthenticationResponse;
 import com.sstohnij.stacktraceqabackendv0.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,10 +22,14 @@ import java.security.Principal;
 @RequestMapping("/api/v0/auth")
 @Slf4j
 @RequiredArgsConstructor
+@Tag(name = "Auth")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    @Operation(
+            description = "Log in endpoint. Returns access token as a response and refresh token in http only cookie"
+    )
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){
         return ResponseEntity.ok()
@@ -38,6 +45,7 @@ public class AuthenticationController {
     }
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Token")
     public ResponseObject<?> logout(Principal principal) {
         authenticationService.logout(principal.getName());
 
@@ -46,6 +54,7 @@ public class AuthenticationController {
                 .message("User logged out")
                 .build();
     }
+
 
     @GetMapping("/email-confirmation")
     public ResponseEntity confirmEmail(@RequestParam("token") String token) {
