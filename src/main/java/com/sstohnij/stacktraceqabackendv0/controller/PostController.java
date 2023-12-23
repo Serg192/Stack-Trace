@@ -2,6 +2,10 @@ package com.sstohnij.stacktraceqabackendv0.controller;
 
 import com.sstohnij.stacktraceqabackendv0.common.ResponseObject;
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.UpdateCommentRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.response.CommentResponse;
+import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
 import com.sstohnij.stacktraceqabackendv0.service.PostService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,6 +47,38 @@ public class PostController {
         return ResponseObject.<PostResponse>builder()
                 .status(ResponseObject.ResponseStatus.SUCCESSFUL)
                 .data(postService.createPost(createPostRequest))
+                .build();
+    }
+
+    @PostMapping("/{post_id}/comment")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Token")
+    public ResponseObject<CommentResponse> createNewPostComment(
+            @PathVariable("post_id") Long postId,
+            @Valid @RequestBody UpdateCommentRequest commentRequest
+    ){
+        log.info("Received add post comment request with post_id={}, comment_content={}",
+                postId,
+                commentRequest.getContent());
+
+        return ResponseObject.<CommentResponse>builder()
+                .status(ResponseObject.ResponseStatus.SUCCESSFUL)
+                .data(postService.addCommentToPost(postId, commentRequest))
+                .build();
+    }
+
+    @PostMapping("/{post_id}/like")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer Token")
+    public ResponseObject<LikeOpResponse> likePost(
+            @PathVariable("post_id" )Long postId,
+            @Valid @RequestBody LikeRequest request
+    ){
+        log.info("Received like post request, like type is -> {}", !request.getIsDislike());
+
+        return ResponseObject.<LikeOpResponse>builder()
+                .status(ResponseObject.ResponseStatus.SUCCESSFUL)
+                .data(postService.likePost(postId, request))
                 .build();
     }
 }

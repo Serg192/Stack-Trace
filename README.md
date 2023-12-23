@@ -16,6 +16,7 @@ Implemented features:
 4. API method security with user roles
 5. User logout
 6. Creating posts (for authenticated users) and get specific post(all users)
+7. Create comments and likes/dislikes under post
 ---
 ### Documentation
 The documentation is built using OpenAPI and Swagger.

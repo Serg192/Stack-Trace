@@ -1,15 +1,17 @@
 package com.sstohnij.stacktraceqabackendv0.service.impl;
 
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.UpdateCommentRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.response.CommentResponse;
+import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
-import com.sstohnij.stacktraceqabackendv0.entity.AppUser;
-import com.sstohnij.stacktraceqabackendv0.entity.Category;
-import com.sstohnij.stacktraceqabackendv0.entity.Post;
+import com.sstohnij.stacktraceqabackendv0.entity.*;
+import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
+import com.sstohnij.stacktraceqabackendv0.mapper.CommentMapper;
 import com.sstohnij.stacktraceqabackendv0.mapper.PostMapper;
-import com.sstohnij.stacktraceqabackendv0.repository.AppUserRepository;
-import com.sstohnij.stacktraceqabackendv0.repository.CategoryRepository;
-import com.sstohnij.stacktraceqabackendv0.repository.PostRepository;
+import com.sstohnij.stacktraceqabackendv0.repository.*;
 import com.sstohnij.stacktraceqabackendv0.service.PostService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,8 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final AppUserRepository appUserRepository;
     private final CategoryRepository categoryRepository;
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     @Override
     public PostResponse getPostById(Long id) {
@@ -47,10 +52,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostResponse createPost(CreatePostRequest postRequest) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        AppUser appUser = appUserRepository.findByUsername(authentication.getName()).orElseThrow(
-                () -> new EntityNotFoundException(String.format("User with username='%s' not found", authentication.getName()))
-        );
+        AppUser appUser = getAuthenticatedUser();
 
         Set<Category> postCategories = categoryRepository.findByIdIn(postRequest.getCategories())
                 .stream()
@@ -68,6 +70,63 @@ public class PostServiceImpl implements PostService {
         post = postRepository.save(post);
 
         return PostMapper.toPostResponse(post);
+    }
+
+    @Override
+    public CommentResponse addCommentToPost(Long postId, UpdateCommentRequest request) {
+        AppUser appUser = getAuthenticatedUser();
+        Post post = postRepository.getPostById(postId)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Post with id='%d' not found", postId)));
+
+        Comment comment = Comment.builder()
+                .user(appUser)
+                .content(request.getContent())
+                .post(post)
+                .publishDate(Calendar.getInstance().getTime())
+                .build();
+
+        comment = commentRepository.save(comment);
+        return CommentMapper.toCommentResponse(comment);
+    }
+
+    @Override
+    public LikeOpResponse likePost(Long postId, LikeRequest request) {
+        AppUser user = getAuthenticatedUser();
+        Post post = postRepository.getPostById(postId)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Post with id='%d' not found", postId)));
+
+        Optional<Like> postLike = likeRepository.findByUserAndPost(user, post);
+        LikeOpResult likeOpResult = null;
+
+        if(postLike.isPresent()) {
+            Like likeInDB = postLike.get();
+            if(likeInDB.isDislike() == request.getIsDislike()) {
+                likeRepository.delete(likeInDB);
+                likeOpResult = LikeOpResult.DELETED;
+            } else {
+                likeInDB.setDislike(request.getIsDislike());
+                likeRepository.save(likeInDB);
+            }
+        } else {
+            Like like = Like.builder()
+                    .isDislike(request.getIsDislike())
+                    .post(post)
+                    .user(user)
+                    .build();
+            likeRepository.save(like);
+        }
+
+        if(likeOpResult == null)
+            likeOpResult = request.getIsDislike() ? LikeOpResult.DISLIKED : LikeOpResult.LIKED;
+
+        return new LikeOpResponse(likeOpResult);
+    }
+
+    private AppUser getAuthenticatedUser(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return appUserRepository.findByUsername(authentication.getName()).orElseThrow(
+                () -> new EntityNotFoundException(String.format("User with username='%s' not found", authentication.getName()))
+        );
     }
 
 }

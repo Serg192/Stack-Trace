@@ -24,7 +24,7 @@ public class CreatePostRequest {
 
     @NotNull(message = "Post content is required")
     @Size(min = 10, message = "Post content should be at least 10 characters")
-    @Size(max = 1000, message = "Post content can't be longer then 100 characters")
+    @Size(max = 1000, message = "Post content can't be longer then 1000 characters")
     private String postContent;
 
     @NotEmpty(message = "At least one category is required")
