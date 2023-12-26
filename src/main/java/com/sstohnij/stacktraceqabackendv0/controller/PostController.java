@@ -10,6 +10,7 @@ import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostsPageResponse;
 import com.sstohnij.stacktraceqabackendv0.service.PostService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,6 +31,9 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping("/{post_id}")
+    @Operation(
+            summary = "Get specific post"
+    )
     public ResponseObject<PostResponse> getPost(@PathVariable("post_id") Long postId) {
         log.info("Received get post request with post_id={}", postId);
 
@@ -42,6 +46,9 @@ public class PostController {
     @PostMapping("/")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Token")
+    @Operation(
+            summary = "Create new post endpoint"
+    )
     public ResponseObject<PostResponse> createNewPost(@Valid @RequestBody UpdatePostRequest createPostRequest){
         log.info("Received create post request with post data -> title: '{}', content: '{}', categories: {}",
                 createPostRequest.getTitle(),
@@ -57,6 +64,9 @@ public class PostController {
     @PostMapping("/{post_id}")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Token")
+    @Operation(
+            summary = "Edit post endpoint"
+    )
     public ResponseObject<PostResponse> editPost(
             @PathVariable("post_id") Long postId,
             @Valid @RequestBody UpdatePostRequest updatePostRequest
@@ -75,6 +85,9 @@ public class PostController {
     @PostMapping("/{post_id}/comment")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Token")
+    @Operation(
+            summary = "Add comment to post"
+    )
     public ResponseObject<CommentResponse> createNewPostComment(
             @PathVariable("post_id") Long postId,
             @Valid @RequestBody UpdateCommentRequest commentRequest
@@ -92,6 +105,9 @@ public class PostController {
     @PostMapping("/{post_id}/like")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Token")
+    @Operation(
+            summary = "Like/dislike post"
+    )
     public ResponseObject<LikeOpResponse> likePost(
             @PathVariable("post_id" )Long postId,
             @Valid @RequestBody LikeRequest request
@@ -106,6 +122,9 @@ public class PostController {
 
 
     @GetMapping
+    @Operation(
+            summary = "Get all post with pagination, sorting & filters"
+    )
     public ResponseObject<PostsPageResponse> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int pageSize,

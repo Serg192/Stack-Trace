@@ -28,7 +28,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @Operation(
-            description = "Log in endpoint. Returns access token as a response and refresh token in http only cookie"
+            summary = "Log in endpoint. Returns access token as a response and refresh token in http only cookie"
     )
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest request){
@@ -38,6 +38,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh")
+    @Operation(
+            summary = "Refresh token endpoint"
+    )
     public ResponseEntity<AuthenticationResponse> refresh() {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -46,6 +49,9 @@ public class AuthenticationController {
     @PostMapping("/logout")
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "Bearer Token")
+    @Operation(
+            summary = "Logout endpoint"
+    )
     public ResponseObject<?> logout(Principal principal) {
         authenticationService.logout(principal.getName());
 
@@ -57,6 +63,9 @@ public class AuthenticationController {
 
 
     @GetMapping("/email-confirmation")
+    @Operation(
+            summary = "Email confirmation endpoint"
+    )
     public ResponseEntity confirmEmail(@RequestParam("token") String token) {
         authenticationService.confirmEmail(token);
         return ResponseEntity.status(HttpStatus.OK).build();

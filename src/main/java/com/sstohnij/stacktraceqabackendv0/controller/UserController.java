@@ -30,7 +30,7 @@ public class UserController {
     private final UserService userService;
 
     @Operation(
-            description = "User registration endpoint"
+            summary = "User registration endpoint"
     )
     @PostMapping("/new")
     public ResponseObject<UserResponse> registerUser(@RequestBody @Valid UserRegistrationRequest userRegistrationRequest) {
@@ -44,6 +44,9 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(
+            summary = "Get all users"
+    )
     public ResponseObject<UsersPageResponse> getAllUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size

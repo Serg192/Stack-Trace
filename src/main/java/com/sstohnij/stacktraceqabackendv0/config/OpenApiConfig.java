@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
         info =  @Info (
                 description = "OpenApi documentation for Stack Trace api",
                 title = "Stack Trace",
-                version =  "0.0.1"
+                version =  "0.0.2"
         ),
         servers =  {
                 @Server(
