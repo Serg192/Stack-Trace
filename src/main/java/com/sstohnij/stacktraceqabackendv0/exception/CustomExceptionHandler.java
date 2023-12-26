@@ -3,6 +3,7 @@ package com.sstohnij.stacktraceqabackendv0.exception;
 import com.sstohnij.stacktraceqabackendv0.common.ResponseObject;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidConformationTokenException;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
+import com.sstohnij.stacktraceqabackendv0.exception.custom.PermissionException;
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -51,6 +52,19 @@ public class CustomExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
+    @ExceptionHandler(value = PermissionException.class)
+    public ResponseEntity<ResponseObject<?>> handleAccessDeniedException(PermissionException e) {
+        log.error(e.getMessage(), e);
+
+        ResponseObject<?> response = ResponseObject
+                .builder()
+                .status(ResponseObject.ResponseStatus.FAILED)
+                .message("You don't have permission to perform this action: " + e.getMessage())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
     @ExceptionHandler(value = BadCredentialsException.class)
     public ResponseEntity<ResponseObject<?>> handleBadCredentialsException(BadCredentialsException e) {
         log.error(e.getMessage(), e);
@@ -76,6 +90,7 @@ public class CustomExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
+
 
     @ExceptionHandler(value = AuthorizationServiceException.class)
     public ResponseEntity<ResponseObject<?>> handleAuthorizationServiceException(AuthorizationServiceException e) {

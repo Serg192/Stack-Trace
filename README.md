@@ -15,8 +15,9 @@ Implemented features:
 3. JWT based authentication and authorization with access & refresh tokens
 4. API method security with user roles
 5. User logout
-6. Creating posts (for authenticated users) and get specific post(all users)
+6. Post creation/edit (for authenticated users) and get specific post(all users)
 7. Create comments and likes/dislikes under post
+8. Sorting and filtering for posts
 ---
 ### Documentation
 The documentation is built using OpenAPI and Swagger.

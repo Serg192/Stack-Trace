@@ -1,7 +1,7 @@
 package com.sstohnij.stacktraceqabackendv0.service.impl;
 
 import com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO;
-import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.UpdatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.PostsPageRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.UpdateCommentRequest;
@@ -13,6 +13,7 @@ import com.sstohnij.stacktraceqabackendv0.entity.*;
 import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
 import com.sstohnij.stacktraceqabackendv0.enums.PostSortOption;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
+import com.sstohnij.stacktraceqabackendv0.exception.custom.PermissionException;
 import com.sstohnij.stacktraceqabackendv0.mapper.CommentMapper;
 import com.sstohnij.stacktraceqabackendv0.mapper.PostMapper;
 import com.sstohnij.stacktraceqabackendv0.repository.*;
@@ -20,11 +21,15 @@ import com.sstohnij.stacktraceqabackendv0.service.PostService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.boot.archive.scan.spi.ClassDescriptor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.config.authentication.AuthenticationProviderBeanDefinitionParser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.MethodNotAllowedException;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -63,18 +68,11 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse createPost(CreatePostRequest postRequest) {
+    public PostResponse createPost(UpdatePostRequest postRequest) {
 
         AppUser appUser = getAuthenticatedUser();
 
-        Set<Category> postCategories = categoryRepository.findByIdIn(postRequest.getCategories())
-                .stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        if(postCategories.size() != postRequest.getCategories().size()) {
-            throw new NotValidRequestParameter(String.format("Request parameter: 'categories' which is %s contains not valid ids", postRequest.getCategories()));
-        }
+        Set<Category> postCategories = validatePostCategories(postRequest.getCategories());
 
         Post post = PostMapper.fromPostRequest(postRequest);
         post.setUser(appUser);
@@ -83,6 +81,31 @@ public class PostServiceImpl implements PostService {
         post = postRepository.save(post);
 
         return PostMapper.toPostResponse(post);
+    }
+
+    @Override
+    public PostResponse editPost(Long postId, UpdatePostRequest request) {
+
+        AppUser appUser = getAuthenticatedUser();
+
+        PostSummaryDTO summaryDTO = postRepository.getPostById(postId).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Post with id='%s' not found", postId))
+        );
+
+        if(!Objects.equals(appUser.getId(), summaryDTO.getPost().getUser().getId())) {
+            throw new PermissionException("User can edit only his own posts");
+        }
+
+        Set<Category> postCategories = validatePostCategories(request.getCategories());
+
+        Post updatedPost = summaryDTO.getPost();
+        updatedPost.setTitle(request.getTitle());
+        updatedPost.setPostContent(request.getPostContent());
+        updatedPost.setCategories(postCategories);
+        updatedPost = postRepository.save(updatedPost);
+        summaryDTO.setPost(updatedPost);
+
+        return PostMapper.postSummaryToPostResponse(summaryDTO);
     }
 
     @Override
@@ -179,6 +202,20 @@ public class PostServiceImpl implements PostService {
                 .filter(requestSort::equals)
                 .findFirst()
                 .orElse(PostSortOption.MOST_LIKED.name());
+    }
+
+    // TODO: move this to validation
+    private Set<Category> validatePostCategories(Set<Long> categories){
+        Set<Category> postCategories = categoryRepository.findByIdIn(categories)
+                .stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if(postCategories.size() != categories.size()) {
+            throw new NotValidRequestParameter(String.format("Request parameter: 'categories' which is %s contains not valid ids", categories));
+        }
+
+        return postCategories;
     }
     private AppUser getAuthenticatedUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

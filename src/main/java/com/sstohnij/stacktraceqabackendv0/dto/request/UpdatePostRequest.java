@@ -1,6 +1,5 @@
 package com.sstohnij.stacktraceqabackendv0.dto.request;
 
-import com.sstohnij.stacktraceqabackendv0.entity.Category;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,7 +14,7 @@ import java.util.Set;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreatePostRequest {
+public class UpdatePostRequest {
 
     @NotNull(message = "Title is required")
     @Size(min = 10, message = "Post title should be at least 10 characters")
