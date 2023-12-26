@@ -72,7 +72,7 @@ public class PostServiceImpl implements PostService {
 
         AppUser appUser = getAuthenticatedUser();
 
-        Set<Category> postCategories = validatePostCategories(postRequest.getCategories());
+        Set<Category> postCategories = categoryRepository.findByIdIn(postRequest.getCategories());
 
         Post post = PostMapper.fromPostRequest(postRequest);
         post.setUser(appUser);
@@ -96,7 +96,7 @@ public class PostServiceImpl implements PostService {
             throw new PermissionException("User can edit only his own posts");
         }
 
-        Set<Category> postCategories = validatePostCategories(request.getCategories());
+        Set<Category> postCategories = categoryRepository.findByIdIn(request.getCategories());
 
         Post updatedPost = summaryDTO.getPost();
         updatedPost.setTitle(request.getTitle());
@@ -204,24 +204,10 @@ public class PostServiceImpl implements PostService {
                 .orElse(PostSortOption.MOST_LIKED.name());
     }
 
-    // TODO: move this to validation
-    private Set<Category> validatePostCategories(Set<Long> categories){
-        Set<Category> postCategories = categoryRepository.findByIdIn(categories)
-                .stream()
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        if(postCategories.size() != categories.size()) {
-            throw new NotValidRequestParameter(String.format("Request parameter: 'categories' which is %s contains not valid ids", categories));
-        }
-
-        return postCategories;
-    }
     private AppUser getAuthenticatedUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return appUserRepository.findByUsername(authentication.getName()).orElseThrow(
                 () -> new EntityNotFoundException(String.format("User with username='%s' not found", authentication.getName()))
         );
     }
-
 }

@@ -1,5 +1,6 @@
 package com.sstohnij.stacktraceqabackendv0.dto.request;
 
+import com.sstohnij.stacktraceqabackendv0.validation.PostCategorySet;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,5 +28,6 @@ public class UpdatePostRequest {
     private String postContent;
 
     @NotEmpty(message = "At least one category is required")
+    @PostCategorySet
     private Set<Long> categories;
 }
