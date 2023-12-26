@@ -1,5 +1,6 @@
 package com.sstohnij.stacktraceqabackendv0.repository;
 
+import com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO;
 import com.sstohnij.stacktraceqabackendv0.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,12 +13,25 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-    Optional<Post> getPostById(Long id);
 
-    @Query("SELECT p, " +
-            "COUNT(CASE WHEN l.isDislike = false THEN 1 END) AS likesCount, " +
-            "COUNT(CASE WHEN l.isDislike = true THEN 1 END) AS dislikesCount, " +
-            "COUNT(DISTINCT c) as commentsCount " +
+    @Query("SELECT NEW com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO ( " +
+            "p," +
+            "COUNT(CASE WHEN l.isDislike = false THEN 1 END)," +
+            "COUNT(CASE WHEN l.isDislike = true THEN 1 END)," +
+            "COUNT(DISTINCT c))" +
+            "FROM Post p " +
+            "LEFT JOIN Like l ON l.post = p " +
+            "LEFT JOIN Comment c ON c.post = p " +
+            "WHERE " +
+            "p.id = :id " +
+            "GROUP BY p")
+    Optional<PostSummaryDTO> getPostById(@Param("id") Long id);
+
+    @Query("SELECT NEW com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO( " +
+            "p, " +
+            "COUNT(CASE WHEN l.isDislike = false THEN 1 END), " +
+            "COUNT(CASE WHEN l.isDislike = true THEN 1 END), " +
+            "COUNT(DISTINCT c))" +
             "FROM Post p " +
             "LEFT JOIN Like l ON l.post = p " +
             "LEFT JOIN Comment c ON c.post = p " +
@@ -32,11 +46,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "CASE WHEN :sort = 'LEAST_LIKED' THEN COUNT(CASE WHEN l.isDislike = false THEN 1 END) END ASC, " +
             "CASE WHEN :sort = 'MOST_RECENT' THEN p.publishDate END DESC, " +
             "CASE WHEN :sort = 'MOST_OLD' THEN p.publishDate END ASC ")
-    Page<Object[]> getSorterAndFilteredPostPage(@Param("sort") String sort,
-                        @Param("categories") Set<Long> categories,
-                        @Param("cat_count") Long catCount,
-                        @Param("startDate") Date startDate,
-                        @Param("endDate") Date endDate,
-                        Pageable pageable);
+    Page<PostSummaryDTO> getSorterAndFilteredPostPage(@Param("sort") String sort,
+                                                        @Param("categories") Set<Long> categories,
+                                                        @Param("cat_count") Long catCount,
+                                                        @Param("startDate") Date startDate,
+                                                        @Param("endDate") Date endDate,
+                                                        Pageable pageable);
 
 }

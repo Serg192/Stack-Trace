@@ -1,5 +1,6 @@
 package com.sstohnij.stacktraceqabackendv0.mapper;
 
+import com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO;
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
@@ -29,6 +30,17 @@ public class PostMapper {
                .postBanned(post.isPostBanned())
                .problemSolved(post.isProblemSolved())
                .userReaction(LikeOpResult.NONE)
+               .likes(0L)
+               .dislikes(0L)
+               .comments(0L)
                .build();
+    }
+
+    public static PostResponse postSummaryToPostResponse(PostSummaryDTO summary) {
+        PostResponse postResponse = PostMapper.toPostResponse(summary.getPost());
+        postResponse.setLikes(summary.getLikesCount());
+        postResponse.setDislikes(summary.getDislikesCount());
+        postResponse.setComments(summary.getCommentsCount());
+        return postResponse;
     }
 }

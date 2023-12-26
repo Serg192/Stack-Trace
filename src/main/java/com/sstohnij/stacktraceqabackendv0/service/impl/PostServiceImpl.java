@@ -1,5 +1,6 @@
 package com.sstohnij.stacktraceqabackendv0.service.impl;
 
+import com.sstohnij.stacktraceqabackendv0.dto.internal.PostSummaryDTO;
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.PostsPageRequest;
@@ -19,14 +20,11 @@ import com.sstohnij.stacktraceqabackendv0.service.PostService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.ObjectError;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -47,23 +45,17 @@ public class PostServiceImpl implements PostService {
     public PostResponse getPostById(Long id) {
         log.info("Trying to get post with id='{}'", id);
 
-        Post post = postRepository.getPostById(id).orElseThrow(() -> new EntityNotFoundException(
+        PostSummaryDTO tmp = postRepository.getPostById(id).orElseThrow(() -> new EntityNotFoundException(
                 String.format("Post with id='%s' not found", id)
         ));
 
-        final long likes = likeRepository.countByPostIdAndIsDislikeIsFalse(id);
-        final long dislikes = likeRepository.countByPostIdAndIsDislikeIsTrue(id);
-        final long comments = commentRepository.countByPostId(id);
+        PostResponse response = PostMapper.postSummaryToPostResponse(tmp);
 
-        PostResponse response = PostMapper.toPostResponse(post);
-        response.setLikes(likes);
-        response.setDislikes(dislikes);
-        response.setComments(comments);
         // If user is authenticated we add additional info about user reaction
         // to post
         try {
             AppUser user = getAuthenticatedUser();
-            Optional<Like> userPostLike = likeRepository.findByUserAndPost(user, post);
+            Optional<Like> userPostLike = likeRepository.findByUserAndPost(user, tmp.getPost());
             userPostLike.ifPresent(like -> response.setUserReaction(like.isDislike() ? LikeOpResult.DISLIKED : LikeOpResult.LIKED));
         } catch (Exception ignored) {}
 
@@ -96,13 +88,14 @@ public class PostServiceImpl implements PostService {
     @Override
     public CommentResponse addCommentToPost(Long postId, UpdateCommentRequest request) {
         AppUser appUser = getAuthenticatedUser();
-        Post post = postRepository.getPostById(postId)
+
+        PostSummaryDTO summaryDTO = postRepository.getPostById(postId)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Post with id='%d' not found", postId)));
 
         Comment comment = Comment.builder()
                 .user(appUser)
                 .content(request.getContent())
-                .post(post)
+                .post(summaryDTO.getPost())
                 .publishDate(Calendar.getInstance().getTime())
                 .build();
 
@@ -113,10 +106,10 @@ public class PostServiceImpl implements PostService {
     @Override
     public LikeOpResponse likePost(Long postId, LikeRequest request) {
         AppUser user = getAuthenticatedUser();
-        Post post = postRepository.getPostById(postId)
+        PostSummaryDTO summaryDTO = postRepository.getPostById(postId)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Post with id='%d' not found", postId)));
 
-        Optional<Like> postLike = likeRepository.findByUserAndPost(user, post);
+        Optional<Like> postLike = likeRepository.findByUserAndPost(user, summaryDTO.getPost());
         LikeOpResult likeOpResult = null;
 
         if(postLike.isPresent()) {
@@ -131,7 +124,7 @@ public class PostServiceImpl implements PostService {
         } else {
             Like like = Like.builder()
                     .isDislike(request.getIsDislike())
-                    .post(post)
+                    .post(summaryDTO.getPost())
                     .user(user)
                     .build();
             likeRepository.save(like);
@@ -162,35 +155,21 @@ public class PostServiceImpl implements PostService {
         if(Objects.nonNull(filterCategories))
             catSize = filterCategories.size();
 
-        Page<Object[]> rawPostsData = postRepository.getSorterAndFilteredPostPage(
+        Page<PostSummaryDTO> postsSummary = postRepository.getSorterAndFilteredPostPage(
                 getSortIOpt(request.getSort()),
                 filterCategories,
                 catSize,
                 startDate,
                 endDate,
                 PageRequest.of(page, pageSize)
-
         );
 
-        List<PostResponse> posts = rawPostsData.getContent().stream()
-                .map(postData -> {
-                    Post p = (Post) postData[0];
-                    Long likes = (Long) postData[1];
-                    Long dislikes = (Long) postData[2];
-                    Long comments = (Long) postData[3];
-                    PostResponse response = PostMapper.toPostResponse(p);
-                    response.setLikes(likes);
-                    response.setDislikes(dislikes);
-                    response.setComments(comments);
-                    return response;
-                })
-                .toList();
-
+        List<PostResponse> pRes = postsSummary.getContent().stream().map(PostMapper::postSummaryToPostResponse).toList();
         return PostsPageResponse.builder()
-                .total(rawPostsData.getTotalPages())
-                .currentPage(rawPostsData.getNumber())
-                .pageSize(rawPostsData.getSize())
-                .posts(posts)
+                .posts(pRes)
+                .total(postsSummary.getTotalPages())
+                .currentPage(postsSummary.getNumber())
+                .pageSize(postsSummary.getSize())
                 .build();
     }
 
