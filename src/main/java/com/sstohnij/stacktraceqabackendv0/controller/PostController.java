@@ -3,18 +3,26 @@ package com.sstohnij.stacktraceqabackendv0.controller;
 import com.sstohnij.stacktraceqabackendv0.common.ResponseObject;
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.PostsPageRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.UpdateCommentRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.response.CommentResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
+import com.sstohnij.stacktraceqabackendv0.dto.response.PostsPageResponse;
 import com.sstohnij.stacktraceqabackendv0.service.PostService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v0/posts")
@@ -79,6 +87,34 @@ public class PostController {
         return ResponseObject.<LikeOpResponse>builder()
                 .status(ResponseObject.ResponseStatus.SUCCESSFUL)
                 .data(postService.likePost(postId, request))
+                .build();
+    }
+
+
+    @GetMapping
+    public ResponseObject<PostsPageResponse> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "MOST_LIKED") String sort,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Set<Long> categories
+            ){
+
+        PostsPageRequest postsPageRequest = PostsPageRequest.builder()
+                .pageNumber(page)
+                .pageSize(pageSize)
+                .sort(sort)
+                .startDate(startDate)
+                .endDate(endDate)
+                .categories(categories)
+                .build();
+
+        log.info("Get all post request received: {}", postsPageRequest);
+
+        return ResponseObject.<PostsPageResponse>builder()
+                .status(ResponseObject.ResponseStatus.SUCCESSFUL)
+                .data(postService.getAllPosts(postsPageRequest))
                 .build();
     }
 }

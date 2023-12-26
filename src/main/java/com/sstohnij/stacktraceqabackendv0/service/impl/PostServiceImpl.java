@@ -2,12 +2,15 @@ package com.sstohnij.stacktraceqabackendv0.service.impl;
 
 import com.sstohnij.stacktraceqabackendv0.dto.request.CreatePostRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.LikeRequest;
+import com.sstohnij.stacktraceqabackendv0.dto.request.PostsPageRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.request.UpdateCommentRequest;
 import com.sstohnij.stacktraceqabackendv0.dto.response.CommentResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.LikeOpResponse;
 import com.sstohnij.stacktraceqabackendv0.dto.response.PostResponse;
+import com.sstohnij.stacktraceqabackendv0.dto.response.PostsPageResponse;
 import com.sstohnij.stacktraceqabackendv0.entity.*;
 import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
+import com.sstohnij.stacktraceqabackendv0.enums.PostSortOption;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
 import com.sstohnij.stacktraceqabackendv0.mapper.CommentMapper;
 import com.sstohnij.stacktraceqabackendv0.mapper.PostMapper;
@@ -17,14 +20,16 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.ObjectError;
 
-import java.util.Calendar;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -138,6 +143,64 @@ public class PostServiceImpl implements PostService {
         return new LikeOpResponse(likeOpResult);
     }
 
+    @Override
+    public PostsPageResponse getAllPosts(PostsPageRequest request) {
+
+        int page = Math.max(request.getPageNumber(), 0);
+        int pageSize = request.getPageSize() > 0 ? request.getPageSize() : 10;
+
+        Date startDate = null, endDate = null;
+        SimpleDateFormat dateFt = new SimpleDateFormat("yyyy-MM-dd");
+
+        try {
+            startDate = dateFt.parse(request.getStartDate());
+            endDate = dateFt.parse(request.getEndDate());
+        } catch (Exception ignored){}
+
+        Set<Long> filterCategories = request.getCategories();
+        long catSize = 0;
+        if(Objects.nonNull(filterCategories))
+            catSize = filterCategories.size();
+
+        Page<Object[]> rawPostsData = postRepository.getSorterAndFilteredPostPage(
+                getSortIOpt(request.getSort()),
+                filterCategories,
+                catSize,
+                startDate,
+                endDate,
+                PageRequest.of(page, pageSize)
+
+        );
+
+        List<PostResponse> posts = rawPostsData.getContent().stream()
+                .map(postData -> {
+                    Post p = (Post) postData[0];
+                    Long likes = (Long) postData[1];
+                    Long dislikes = (Long) postData[2];
+                    Long comments = (Long) postData[3];
+                    PostResponse response = PostMapper.toPostResponse(p);
+                    response.setLikes(likes);
+                    response.setDislikes(dislikes);
+                    response.setComments(comments);
+                    return response;
+                })
+                .toList();
+
+        return PostsPageResponse.builder()
+                .total(rawPostsData.getTotalPages())
+                .currentPage(rawPostsData.getNumber())
+                .pageSize(rawPostsData.getSize())
+                .posts(posts)
+                .build();
+    }
+
+    private String getSortIOpt(String requestSort) {
+        return Arrays.stream(PostSortOption.values())
+                .map(Enum::name)
+                .filter(requestSort::equals)
+                .findFirst()
+                .orElse(PostSortOption.MOST_LIKED.name());
+    }
     private AppUser getAuthenticatedUser(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return appUserRepository.findByUsername(authentication.getName()).orElseThrow(
