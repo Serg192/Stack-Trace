@@ -16,6 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -120,6 +122,18 @@ public class PostController {
                 .build();
     }
 
+    @DeleteMapping("/{post_id}")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "Bearer token")
+    @Operation(
+            summary = "Delete post for user type = USER"
+    )
+    public ResponseEntity<?> deletePost(@PathVariable("post_id") Long postId) {
+        log.info("[USER] Received delete post request with post_id:{}", postId);
+
+        postService.deletePost(postId);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
     @GetMapping
     @Operation(

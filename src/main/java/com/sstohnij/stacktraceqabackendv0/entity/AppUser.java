@@ -68,7 +68,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !accountDeleted && !accountBanned;
+        return !accountBanned;
 
     }
 

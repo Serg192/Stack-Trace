@@ -66,7 +66,7 @@ public class AuthenticationController {
     @Operation(
             summary = "Email confirmation endpoint"
     )
-    public ResponseEntity confirmEmail(@RequestParam("token") String token) {
+    public ResponseEntity<?> confirmEmail(@RequestParam("token") String token) {
         authenticationService.confirmEmail(token);
         return ResponseEntity.status(HttpStatus.OK).build();
     }

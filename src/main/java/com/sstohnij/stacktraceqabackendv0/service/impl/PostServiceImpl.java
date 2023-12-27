@@ -12,6 +12,7 @@ import com.sstohnij.stacktraceqabackendv0.dto.response.PostsPageResponse;
 import com.sstohnij.stacktraceqabackendv0.entity.*;
 import com.sstohnij.stacktraceqabackendv0.enums.LikeOpResult;
 import com.sstohnij.stacktraceqabackendv0.enums.PostSortOption;
+import com.sstohnij.stacktraceqabackendv0.enums.RoleName;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.NotValidRequestParameter;
 import com.sstohnij.stacktraceqabackendv0.exception.custom.PermissionException;
 import com.sstohnij.stacktraceqabackendv0.mapper.CommentMapper;
@@ -86,16 +87,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostResponse editPost(Long postId, UpdatePostRequest request) {
 
-        AppUser appUser = getAuthenticatedUser();
-
-        PostSummaryDTO summaryDTO = postRepository.getPostById(postId).orElseThrow(
-                () -> new EntityNotFoundException(String.format("Post with id='%s' not found", postId))
-        );
-
-        if(!Objects.equals(appUser.getId(), summaryDTO.getPost().getUser().getId())) {
-            throw new PermissionException("User can edit only his own posts");
-        }
-
+        PostSummaryDTO summaryDTO = getPostIfHasPermission(postId, "User can edit only his own posts");
         Set<Category> postCategories = categoryRepository.findByIdIn(request.getCategories());
 
         Post updatedPost = summaryDTO.getPost();
@@ -194,6 +186,24 @@ public class PostServiceImpl implements PostService {
                 .currentPage(postsSummary.getNumber())
                 .pageSize(postsSummary.getSize())
                 .build();
+    }
+
+    @Override
+    public void deletePost(Long postId) {
+        PostSummaryDTO summaryDTO = getPostIfHasPermission(postId, String.format("User with role: '%s' can only delete his own posts", RoleName.ROLE_USER.str()));
+        postRepository.delete(summaryDTO.getPost());
+    }
+
+    private PostSummaryDTO getPostIfHasPermission(Long postId, String noPermissionExceptionText){
+        AppUser user = getAuthenticatedUser();
+        PostSummaryDTO summaryDTO = postRepository.getPostById(postId).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Post with id='%d' not found in the database", postId))
+        );
+
+        if(!Objects.equals(user.getId(), summaryDTO.getPost().getUser().getId())) {
+            throw new PermissionException(String.format(noPermissionExceptionText));
+        }
+        return summaryDTO;
     }
 
     private String getSortIOpt(String requestSort) {

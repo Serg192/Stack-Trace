@@ -15,6 +15,7 @@ import org.springframework.security.access.AuthorizationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -112,6 +113,8 @@ public class CustomExceptionHandler {
         String message = "";
         if(e.getCause() instanceof DisabledException) {
             message = "Verify your email";
+        } else if (e.getCause() instanceof LockedException) {
+            message = "You have been banned from using this website";
         }
 
         ResponseObject<?> response = ResponseObject
